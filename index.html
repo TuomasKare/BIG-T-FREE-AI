@@ -67,17 +67,16 @@ VERSION 4
 
 <textarea id="answer"></textarea>
 
+<br><br>
+
+<button onclick="testApi()">Testaa Oracle API</button>
+
+<div id="result" style="margin-top:20px;font-weight:bold"></div>
+
 <script>
 
 const OWNER = "TuomasKare";
 const REPO = "BIG-T-FREE-AI";
-
-/*
-PASTE YOUR REAL GITHUB PAT HERE
-
-Example:
-const TOKEN = "github_pat_xxxxxxxxxxxxxxxxxxxxxx";
-*/
 
 const TOKEN = "PASTE_YOUR_GITHUB_PAT_HERE";
 
@@ -140,8 +139,29 @@ ${error}
     }
 }
 
+async function testApi()
+{
+    try
+    {
+        const response =
+            await fetch(
+                "http://82.70.42.199:8000/"
+            );
+
+        const data =
+            await response.json();
+
+        document.getElementById("result").innerText =
+            JSON.stringify(data);
+    }
+    catch(e)
+    {
+        document.getElementById("result").innerText =
+            "Virhe: " + e;
+    }
+}
+
 </script>
 
 </body>
 </html>
-`
