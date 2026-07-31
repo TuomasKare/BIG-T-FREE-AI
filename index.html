@@ -59,10 +59,7 @@ const OWNER = "TuomasKare";
 const REPO = "BIG-T-FREE-AI";
 
 /*
-   Personal Access Token
-   Needs:
-   - Actions: Read & Write
-   - Contents: Read
+PUT YOUR PAT HERE
 */
 const TOKEN = "YOUR_GITHUB_PAT";
 
@@ -86,16 +83,26 @@ async function triggerWorkflow(question)
         }
     );
 
+    const text = await response.text();
+
+    console.log("Status:", response.status);
+    console.log("Response:", text);
+
     if(!response.ok)
     {
-        throw new Error("Failed to start workflow");
+        throw new Error(
+            "GitHub Error " +
+            response.status +
+            "\n\n" +
+            text
+        );
     }
 }
 
 async function readAnswer()
 {
     const response = await fetch(
-        `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/answer.json?t=${Date.now()}`
+        `answer.json?t=${Date.now()}`
     );
 
     const data = await response.json();
@@ -119,44 +126,36 @@ async function askBIGT()
     {
         await triggerWorkflow(question);
 
-        let attempts = 0;
+        document.getElementById("answer").value =
+            "Workflow started. Waiting for answer...";
+
+        let count = 0;
 
         const poll = setInterval(async () =>
         {
-            attempts++;
+            count++;
 
             try
             {
                 await readAnswer();
-
-                const answer =
-                    document.getElementById("answer").value;
-
-                if(answer !== "BIG-T-FREE-AI is thinking...")
-                {
-                    clearInterval(poll);
-                }
             }
             catch(e)
             {
                 console.log(e);
             }
 
-            if(attempts > 24)
+            if(count > 24)
             {
                 clearInterval(poll);
-
-                document.getElementById("answer").value =
-                    "Timeout waiting for answer.";
             }
 
-        }, 5000);
+        },5000);
 
     }
-    catch(error)
+    catch(err)
     {
         document.getElementById("answer").value =
-            error.message;
+            err.message;
     }
 }
 
