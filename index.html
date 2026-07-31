@@ -11,10 +11,6 @@ body{
     margin: 40px auto;
 }
 
-h2{
-    margin-bottom:20px;
-}
-
 .row{
     display:flex;
     gap:10px;
@@ -44,10 +40,13 @@ textarea{
 
 <body>
 
-<h2>BIG-T-FREE-AI</h2>
+<h1>BIG-T-FREE-AI</h1>
 
 <div class="row">
-    <input id="question" placeholder="Ask BIG-T-FREE-AI anything">
+    <input
+        id="question"
+        type="text"
+        placeholder="Ask BIG-T-FREE-AI anything">
     <button onclick="askBIGT()">ASK</button>
 </div>
 
@@ -59,25 +58,31 @@ const OWNER = "TuomasKare";
 const REPO = "BIG-T-FREE-AI";
 
 /*
-PUT YOUR PAT HERE
+IMPORTANT:
+
+Replace the text below with your actual GitHub PAT.
+
+Example:
+const TOKEN = "github_pat_xxxxxxxxxxxxx";
 */
-const TOKEN = "YOUR_GITHUB_PAT";
+
+const TOKEN = "PASTE_YOUR_GITHUB_PAT_HERE";
 
 async function triggerWorkflow(question)
 {
     const response = await fetch(
         `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/BIG-T-FREE-AI.yml/dispatches`,
         {
-            method:"POST",
-            headers:{
-                "Authorization":`Bearer ${TOKEN}`,
-                "Accept":"application/vnd.github+json",
-                "Content-Type":"application/json"
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${TOKEN}`,
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json"
             },
-            body:JSON.stringify({
-                ref:"main",
-                inputs:{
-                    question:question
+            body: JSON.stringify({
+                ref: "main",
+                inputs: {
+                    question: question
                 }
             })
         }
@@ -88,13 +93,10 @@ async function triggerWorkflow(question)
     console.log("Status:", response.status);
     console.log("Response:", text);
 
-    if(!response.ok)
+    if (!response.ok)
     {
         throw new Error(
-            "GitHub Error " +
-            response.status +
-            "\n\n" +
-            text
+            `GitHub Error ${response.status}\n\n${text}`
         );
     }
 }
@@ -116,7 +118,7 @@ async function askBIGT()
     const question =
         document.getElementById("question").value.trim();
 
-    if(question === "")
+    if(question.length === 0)
         return;
 
     document.getElementById("answer").value =
@@ -127,29 +129,29 @@ async function askBIGT()
         await triggerWorkflow(question);
 
         document.getElementById("answer").value =
-            "Workflow started. Waiting for answer...";
+            "Workflow started successfully";
 
-        let count = 0;
+        let attempts = 0;
 
-        const poll = setInterval(async () =>
+        const poll = setInterval(async function()
         {
-            count++;
+            attempts++;
 
             try
             {
                 await readAnswer();
             }
-            catch(e)
+            catch(err)
             {
-                console.log(e);
+                console.log(err);
             }
 
-            if(count > 24)
+            if(attempts > 24)
             {
                 clearInterval(poll);
             }
 
-        },5000);
+        }, 5000);
 
     }
     catch(err)
@@ -159,7 +161,10 @@ async function askBIGT()
     }
 }
 
-window.onload = readAnswer;
+window.onload = function()
+{
+    readAnswer().catch(console.log);
+};
 
 </script>
 
