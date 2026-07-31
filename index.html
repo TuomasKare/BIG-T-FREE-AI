@@ -2,17 +2,26 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>BIG-T AI</title>
+<title>BIG-T-FREE-AI</title>
 
 <style>
 body{
-    font-family:Arial;
-    max-width:1000px;
-    margin:40px auto;
+    font-family: Arial, sans-serif;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+h2{
+    margin-bottom:20px;
+}
+
+.row{
+    display:flex;
+    gap:10px;
 }
 
 input{
-    width:80%;
+    flex:1;
     padding:10px;
     font-size:16px;
 }
@@ -20,6 +29,7 @@ input{
 button{
     padding:10px 20px;
     font-size:16px;
+    cursor:pointer;
 }
 
 textarea{
@@ -27,18 +37,19 @@ textarea{
     height:400px;
     margin-top:20px;
     padding:10px;
+    font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>BIG-T AI</h2>
+<h2>BIG-T-FREE-AI</h2>
 
-<input id="question" placeholder="Ask BIG-T-FREE-AI anything">
-<button onclick="askBIGT()">ASK</button>
-
-<br><br>
+<div class="row">
+    <input id="question" placeholder="Ask BIG-T-FREE-AI anything">
+    <button onclick="askBIGT()">ASK</button>
+</div>
 
 <textarea id="answer" readonly></textarea>
 
@@ -46,64 +57,32 @@ textarea{
 
 const OWNER = "TuomasKare";
 const REPO = "BIG-T-FREE-AI";
-const TOKEN = "YOUR_GITHUB_TOKEN";
 
-async function getFileSha(path)
-{
-    const r = await fetch(
-        `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`,
-        {
-            headers:{
-                Authorization:`token ${TOKEN}`
-            }
-        }
-    );
+/*
+  Replace with your PAT
+  Needs:
+  Actions = Read & Write
+  Contents = Read
+*/
 
-    const data = await r.json();
-    return data.sha;
-}
+const TOKEN = "YOUR_GITHUB_PAT";
 
-async function updateQuestion(question)
-{
-    const sha = await getFileSha("question.json");
-
-    const content = btoa(
-        JSON.stringify(
-            {question:question},
-            null,
-            2
-        )
-    );
-
-    await fetch(
-        `https://api.github.com/repos/${OWNER}/${REPO}/contents/question.json`,
-        {
-            method:"PUT",
-            headers:{
-                Authorization:`token ${TOKEN}`,
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                message:"Update question",
-                content:content,
-                sha:sha
-            })
-        }
-    );
-}
-
-async function triggerWorkflow()
+async function triggerWorkflow(question)
 {
     await fetch(
-        `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/BIG-T-FREE-AI.yml/dispatches`,
+        `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/gemini.yml/dispatches`,
         {
             method:"POST",
             headers:{
-                Authorization:`token ${TOKEN}`,
-                Accept:"application/vnd.github+json"
+                Authorization:`Bearer ${TOKEN}`,
+                Accept:"application/vnd.github+json",
+                "Content-Type":"application/json"
             },
             body:JSON.stringify({
-                ref:"main"
+                ref:"main",
+                inputs:{
+                    question:question
+                }
             })
         }
     );
@@ -126,15 +105,32 @@ async function askBIGT()
     const q =
         document.getElementById("question").value;
 
+    if(!q.trim())
+        return;
+
     document.getElementById("answer").value =
-        "Thinking...";
+        "BIG-T-FREE-AI is thinking...";
 
-    await updateQuestion(q);
+    await triggerWorkflow(q);
 
-    await triggerWorkflow();
+    let attempts = 0;
 
-    setTimeout(readAnswer,10000);
+    const poll = setInterval(async () => {
+
+        attempts++;
+
+        try{
+            await readAnswer();
+        }
+        catch(e){}
+
+        if(attempts > 12)
+            clearInterval(poll);
+
+    },5000);
 }
+
+window.onload = readAnswer;
 
 </script>
 
