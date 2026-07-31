@@ -35,8 +35,8 @@ textarea{
 
 <h2>BIG-T AI</h2>
 
-<input id="question" placeholder="Ask Gemini anything">
-<button onclick="askGemini()">ASK</button>
+<input id="question" placeholder="Ask BIG-T-FREE-AI anything">
+<button onclick="askBIGT()">ASK</button>
 
 <br><br>
 
@@ -95,7 +95,7 @@ async function updateQuestion(question)
 async function triggerWorkflow()
 {
     await fetch(
-        `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/gemini.yml/dispatches`,
+        `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/BIG-T-FREE-AI.yml/dispatches`,
         {
             method:"POST",
             headers:{
@@ -121,7 +121,7 @@ async function readAnswer()
         data.answer;
 }
 
-async function askGemini()
+async function askBIGT()
 {
     const q =
         document.getElementById("question").value;
