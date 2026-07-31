@@ -89,17 +89,13 @@ document.getElementById("version").innerText =
 
 const TOKEN = "PASTE_YOUR_GITHUB_PAT_HERE";
 
-const TOKEN = "PASTE_YOUR_GITHUB_PAT_HERE";
-
 async function askBIGT()
 {
     const answerBox =
         document.getElementById("answer");
 
     answerBox.value =
-`VERSION 4
-
-Repository: ${OWNER}/${REPO}
+`Repository: ${OWNER}/${REPO}
 
 Token length: ${TOKEN.length}
 
@@ -155,9 +151,9 @@ async function testApi()
     try
     {
         const response =
-await fetch(
-    "https://82.70.42.199:8443/"
-);
+            await fetch(
+                "https://82.70.42.199:8443/"
+            );
 
         const data =
             await response.json();
