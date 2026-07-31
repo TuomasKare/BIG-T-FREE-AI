@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>BIG-T AI</title>
+
+<style>
+body{
+    font-family:Arial;
+    max-width:1000px;
+    margin:40px auto;
+}
+
+input{
+    width:80%;
+    padding:10px;
+    font-size:16px;
+}
+
+button{
+    padding:10px 20px;
+    font-size:16px;
+}
+
+textarea{
+    width:100%;
+    height:400px;
+    margin-top:20px;
+    padding:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>BIG-T AI</h2>
+
+<input id="question" placeholder="Ask Gemini anything">
+<button onclick="askGemini()">ASK</button>
+
+<br><br>
+
+<textarea id="answer" readonly></textarea>
+
+<script>
+
+const OWNER = "TuomasKare";
+const REPO = "BIG-T-FREE-AI";
+const TOKEN = "YOUR_GITHUB_TOKEN";
+
+async function getFileSha(path)
+{
+    const r = await fetch(
+        `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`,
+        {
+            headers:{
+                Authorization:`token ${TOKEN}`
+            }
+        }
+    );
+
+    const data = await r.json();
+    return data.sha;
+}
+
+async function updateQuestion(question)
+{
+    const sha = await getFileSha("question.json");
+
+    const content = btoa(
+        JSON.stringify(
+            {question:question},
+            null,
+            2
+        )
+    );
+
+    await fetch(
+        `https://api.github.com/repos/${OWNER}/${REPO}/contents/question.json`,
+        {
+            method:"PUT",
+            headers:{
+                Authorization:`token ${TOKEN}`,
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                message:"Update question",
+                content:content,
+                sha:sha
+            })
+        }
+    );
+}
+
+async function triggerWorkflow()
+{
+    await fetch(
+        `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/gemini.yml/dispatches`,
+        {
+            method:"POST",
+            headers:{
+                Authorization:`token ${TOKEN}`,
+                Accept:"application/vnd.github+json"
+            },
+            body:JSON.stringify({
+                ref:"main"
+            })
+        }
+    );
+}
+
+async function readAnswer()
+{
+    const r = await fetch(
+        `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/answer.json?t=${Date.now()}`
+    );
+
+    const data = await r.json();
+
+    document.getElementById("answer").value =
+        data.answer;
+}
+
+async function askGemini()
+{
+    const q =
+        document.getElementById("question").value;
+
+    document.getElementById("answer").value =
+        "Thinking...";
+
+    await updateQuestion(q);
+
+    await triggerWorkflow();
+
+    setTimeout(readAnswer,10000);
+}
+
+</script>
+
+</body>
+</html>
