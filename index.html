@@ -84,8 +84,7 @@ async function askBIGT()
     answerBox.value = "Kysytään Oracle-serveriltä...\n";
 
     try {
-fetch("http://82.70.42.199:8443/ask", ...)
-
+        const response = await fetch("http://82.70.42.199:8443/ask", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -94,7 +93,6 @@ fetch("http://82.70.42.199:8443/ask", ...)
         });
 
         const data = await response.json();
-
         answerBox.value += "\nVastaus:\n\n" + data.answer;
     }
     catch (e) {
