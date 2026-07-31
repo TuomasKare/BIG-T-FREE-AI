@@ -1,7 +1,11 @@
-name: Gemini AI
+name: BIG-T-FREE-AI
 
 on:
   workflow_dispatch:
+    inputs:
+      question:
+        description: "Question for BIG-T-FREE-AI"
+        required: true
 
 permissions:
   contents: write
@@ -12,42 +16,45 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Read Question
-      id: question
-      run: |
-        QUESTION=$(jq -r '.question' question.json)
-        echo "QUESTION<<EOF" >> $GITHUB_ENV
-        echo "$QUESTION" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+      - name: Ask Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          QUESTION: ${{ github.event.inputs.question }}
+        run: |
 
-    - name: Ask Gemini
-      run: |
-        RESPONSE=$(curl -s \
-          -H "Content-Type: application/json" \
-          -X POST \
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
-          -d "{
-            \"contents\": [{
-              \"parts\": [{
-                \"text\": \"${QUESTION}\"
-              }]
-            }]
-          }")
+          RESPONSE=$(curl -s \
+            -H "Content-Type: application/json" \
+            -X POST \
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$GEMINI_API_KEY" \
+            -d "{
+              \"contents\": [
+                {
+                  \"parts\": [
+                    {
+                      \"text\": \"$QUESTION\"
+                    }
+                  ]
+                }
+              ]
+            }")
 
-        ANSWER=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
+          ANSWER=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
 
-        jq -n --arg a "$ANSWER" \
-        '{answer:$a}' > answer.json
+          jq -n \
+            --arg answer "$ANSWER" \
+            '{answer:$answer}' \
+            > answer.json
 
-    - name: Commit Answer
-      run: |
-        git config user.name github-actions
-        git config user.email github-actions@github.com
+      - name: Commit Answer
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
 
-        git add answer.json
+          git add answer.json
 
-        git commit -m "Update AI answer" || echo "No changes"
+          git commit -m "Update answer" || true
 
-        git push
+          git push
