@@ -1,0 +1,53 @@
+name: Gemini AI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ask:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Read Question
+      id: question
+      run: |
+        QUESTION=$(jq -r '.question' question.json)
+        echo "QUESTION<<EOF" >> $GITHUB_ENV
+        echo "$QUESTION" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Ask Gemini
+      run: |
+        RESPONSE=$(curl -s \
+          -H "Content-Type: application/json" \
+          -X POST \
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
+          -d "{
+            \"contents\": [{
+              \"parts\": [{
+                \"text\": \"${QUESTION}\"
+              }]
+            }]
+          }")
+
+        ANSWER=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text')
+
+        jq -n --arg a "$ANSWER" \
+        '{answer:$a}' > answer.json
+
+    - name: Commit Answer
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+
+        git add answer.json
+
+        git commit -m "Update AI answer" || echo "No changes"
+
+        git push
