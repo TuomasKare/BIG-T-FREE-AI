@@ -52,9 +52,7 @@ textarea{
 
 <body>
 
-<div id="version">
-VERSION 5
-</div>
+<div id="version"></div>
 
 <h1>BIG-T-FREE-AI</h1>
 
@@ -77,6 +75,19 @@ VERSION 5
 
 const OWNER = "TuomasKare";
 const REPO = "BIG-T-FREE-AI";
+
+const d = new Date(document.lastModified);
+
+document.getElementById("version").innerText =
+    "Build " +
+    d.getFullYear() +
+    String(d.getMonth()+1).padStart(2,'0') +
+    String(d.getDate()).padStart(2,'0') +
+    "." +
+    String(d.getHours()).padStart(2,'0') +
+    String(d.getMinutes()).padStart(2,'0');
+
+const TOKEN = "PASTE_YOUR_GITHUB_PAT_HERE";
 
 const TOKEN = "PASTE_YOUR_GITHUB_PAT_HERE";
 
